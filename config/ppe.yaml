@@ -1,0 +1,12 @@
+train:
+  - C:\Users\ASUS\Project\smart_ppe_system_v2\data\construction-ppe\images\train
+  - C:\Users\ASUS\Project\smart_ppe_system_v2\data\yolo_dataset\train\images
+val:
+  - C:\Users\ASUS\Project\smart_ppe_system_v2\data\construction-ppe\images\val
+  - C:\Users\ASUS\Project\smart_ppe_system_v2\data\yolo_dataset\val\images
+test: C:\Users\ASUS\Project\smart_ppe_system_v2\data\construction-ppe\images\test
+
+nc: 11
+names:
+  ['helmet', 'gloves', 'vest', 'boots', 'goggles',
+   'no_vest', 'person', 'no_helmet', 'no_goggle', 'no_gloves', 'no_boots']

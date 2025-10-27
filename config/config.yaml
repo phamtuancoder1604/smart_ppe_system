@@ -1,0 +1,24 @@
+models:
+
+  face_detector: "buffalo_l"
+  face_recognition: "models/weights/buffalo_l/w600k_r50.onnx"
+  face_alignment: "models/weights/buffalo_l/2d106det.onnx"
+  face_embedding: "models/weights/buffalo_l/w600k_r50.onnx"
+
+  person_detector: "models/weights/yolov8n.pt"
+  ppe_detector: "runs/detect/train8/weights/best.pt"
+  reid_onnx: "models/weights/osnet_x0_25_msmt17.onnx"
+
+thresholds:
+  face_match: 0.95
+  reid_match: 0.75
+  ppe_confidence: 0.40
+  iou_person_ppe: 0.8
+
+cameras:
+  checkin: 0
+  working_area:
+    - 0
+
+ppe_rules_by_zone:
+  default: ["helmet", "vest"]
