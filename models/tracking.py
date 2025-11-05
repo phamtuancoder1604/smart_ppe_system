@@ -1,56 +1,9 @@
-# import sys, os
-# import numpy as np
-# # --- Thêm đường dẫn OC_SORT vào sys.path ---
-# CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-# PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, os.pardir))
-# OCSORT_PATH = os.path.join(PROJECT_ROOT, "OC_SORT")
-# if OCSORT_PATH not in sys.path:
-#     sys.path.append(OCSORT_PATH)
-#
-# # --- Import OC-SORT chính thức ---
-# try:
-#     from trackers.ocsort_tracker.ocsort import OCSort
-# except ModuleNotFoundError as e:
-#     raise ImportError(
-#         f"[ERROR] Không thể import OC-SORT.\n"
-#         f"Kiểm tra lại rằng bạn có thư mục: {OCSORT_PATH}\\trackers\\ocsort_tracker\\ocsort.py\n"
-#         f"Chi tiết lỗi: {e}"
-#     )
-#
-# class TrackerOCSort:
-#     def __init__(self):
-#
-#         self.tracker = OCSort(det_thresh=0.5, max_age=30, min_hits=3, iou_threshold=0.3)
-#
-#     def update(self, frame, detections):
-#
-#         if isinstance(detections, list):
-#             detections = np.array(detections, dtype=np.float32)
-#         elif isinstance(detections, np.ndarray) and detections.size == 0:
-#             detections = np.zeros((0, 5), dtype=np.float32)
-#
-#         if detections.ndim == 1:
-#             detections = detections.reshape(1, -1)
-#
-#         h, w = frame.shape[:2]
-#         img_info = (h, w, 3)
-#         img_size = (w, h)
-#
-#         tracks = self.tracker.update(detections, img_info, img_size)
-#
-#         results = []
-#         for t in tracks:
-#             x1, y1, x2, y2, tid = t[0], t[1], t[2], t[3], int(t[4])
-#             results.append([x1, y1, x2, y2, tid])
-#         return results
 
 import numpy as np
 import cv2
 from scipy.optimize import linear_sum_assignment
 from models.utils import cosine_similarity
 
-
-# ----------------------------- TRACK CLASS -----------------------------
 class Track:
     def __init__(self, box, tid, embedding=None):
         self.box = np.array(box[:4], dtype=float)
@@ -63,7 +16,6 @@ class Track:
         return np.array([(b[0]+b[2])/2.0, (b[1]+b[3])/2.0], dtype=float)
 
 
-# -------------------------- TRACKER WITH REID --------------------------
 class TrackerOCSortLite:
     def __init__(self, max_age=30, iou_thresh=0.5, reid_thresh=0.7):
         self.max_age = max_age
@@ -72,8 +24,6 @@ class TrackerOCSortLite:
         self.tracks = []
         self.next_id = 1
         self.prev_gray = None
-
-    # --- IoU ---
     def _iou(self, a, b):
         xA, yA = max(a[0], b[0]), max(a[1], b[1])
         xB, yB = min(a[2], b[2]), min(a[3], b[3])
@@ -82,7 +32,6 @@ class TrackerOCSortLite:
         areaB = max(1.0,(b[2]-b[0]))*max(1.0,(b[3]-b[1]))
         return inter / (areaA + areaB - inter + 1e-6)
 
-    # --- Dự đoán bằng optical flow ---
     def _predict_with_flow(self, frame_gray):
         if self.prev_gray is None or len(self.tracks) == 0:
             self.prev_gray = frame_gray.copy()
@@ -97,7 +46,6 @@ class TrackerOCSortLite:
                 t.prev_center = t.prev_center + flow
         self.prev_gray = frame_gray.copy()
 
-    # --- Update với ReID hỗ trợ ---
     def update(self, frame, detections, reid_model=None):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         self._predict_with_flow(gray)
