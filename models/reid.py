@@ -16,7 +16,6 @@ class ReIDModel:
         self.ort_sess = None
         self.model = None
 
-        # --- Nếu có file ONNX, ưu tiên dùng ONNX ---
         if onnx_path and os.path.exists(onnx_path):
             try:
                 self.ort_sess = ort.InferenceSession(
@@ -29,14 +28,12 @@ class ReIDModel:
 
 
         if self.mode == "torchreid":
-            # Tạo model OSNet (nhẹ, realtime, pretrained)
             self.model = torchreid.models.build_model(
                 name="osnet_x1_0", num_classes=1000, pretrained=True
             )
             self.model.eval()
             self.model.to(self.device)
 
-            # Tạo transform chuẩn cho input ảnh
             self.transform = torchreid.data.transforms.build_transforms(
                 height=256,
                 width=128,
@@ -54,16 +51,11 @@ class ReIDModel:
 
     # ----------------------------------------------------------------------
     def get_body_embedding(self, body_img):
-        """
-        Trích xuất embedding thân người từ ảnh (numpy hoặc PIL).
-        Hỗ trợ cả mô hình ONNX và Torchreid.
-        """
-        # 1️⃣ Kiểm tra ảnh hợp lệ
+
         if body_img is None:
             print("[ReIDModel] Warning: body_img is None.")
             return np.zeros(512, dtype=np.float32).tolist()
 
-        # 2️⃣ Chuyển về numpy nếu là PIL
         if not isinstance(body_img, np.ndarray):
             try:
                 body_img = np.array(body_img)
@@ -71,12 +63,10 @@ class ReIDModel:
                 print(f"[ReIDModel] Invalid image type: {type(body_img)}, error: {e}")
                 return np.zeros(512, dtype=np.float32).tolist()
 
-        # 3️⃣ Nếu mảng rỗng
         if body_img.size == 0:
             print("[ReIDModel] Warning: body_img is empty.")
             return np.zeros(512, dtype=np.float32).tolist()
 
-        # 4️⃣ ONNX mode
         if self.mode == "onnx" and self.ort_sess is not None:
             x = self.preprocess_onnx(body_img)
             out = self.ort_sess.run(
@@ -86,7 +76,6 @@ class ReIDModel:
             vec = vec / (np.linalg.norm(vec) + 1e-6)
             return vec.tolist()
 
-        # 5️⃣ Torchreid mode
         with torch.no_grad():
             body_img = cv2.resize(body_img, (128, 256))
             body_img = cv2.cvtColor(body_img, cv2.COLOR_BGR2RGB)
@@ -98,7 +87,6 @@ class ReIDModel:
             vec = vec / (np.linalg.norm(vec) + 1e-6)
             return vec.tolist()
 
-    # ----------------------------------------------------------------------
     def match_employee(self, track_emb, body_db, threshold=0.75):
         """
         So khớp embedding hiện tại (track_emb) với database nhân viên.
